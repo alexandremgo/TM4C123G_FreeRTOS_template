@@ -1,0 +1,8 @@
+# CCS 
+.settings/
+.launches/
+Debug/
+targetConfigs/
+.ccsproject
+.cproject
+.project
