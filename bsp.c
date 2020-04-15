@@ -23,9 +23,8 @@ void BSP_init(void)
     GPIOF_AHB->IEV &= ~BTN_SW1; /* a falling edge triggers the interrupt */
     GPIOF_AHB->IM |= BTN_SW1; /* enable GPIOF interrupt for SW1 */
 
-    // ICI CHECK WHICH PRIORITY SHOULD BE PUT
-    // AND HOW FreeRTOS enable interrupts.
-    NVIC_SetPriority(GPIOF_IRQn, 4u);
+    /* Enable the GPIO interrupt for SW1. */
+    NVIC_SetPriority(GPIOF_IRQn, configLIBRARY_LOWEST_INTERRUPT_PRIORITY);
     NVIC_EnableIRQ(GPIOF_IRQn);
 
 }
@@ -52,12 +51,6 @@ void BSP_ledBlueOff(void)
     GPIOF_AHB->DATA_Bits[LED_BLUE] = 0U;
 }
 
-void BSP_ledBlueToggle(void)
-{
-    // Critical section: Mutual exclusion.
-    GPIOF_AHB->DATA ^= LED_BLUE;
-}
-
 void BSP_ledGreenOn(void)
 {
     GPIOF_AHB->DATA_Bits[LED_GREEN] = LED_GREEN;
@@ -70,19 +63,17 @@ void BSP_ledGreenOff(void)
 
 void BSP_ledGreenToggle(void)
 {
-    // Critical section: Mutual exclusion.
-
     GPIOF_AHB->DATA ^= LED_GREEN;
 }
 
-void BSP_ledOn(unsigned led)
+void BSP_ledOn(uint8_t led)
 {
     if(led == LED_RED || led == LED_BLUE || led == LED_GREEN) {
         GPIOF_AHB->DATA_Bits[led] = led;
     }
 }
 
-void BSP_ledOff(unsigned led)
+void BSP_ledOff(uint8_t led)
 {
     if(led == LED_RED || led == LED_BLUE || led == LED_GREEN) {
         GPIOF_AHB->DATA_Bits[led] = 0U;

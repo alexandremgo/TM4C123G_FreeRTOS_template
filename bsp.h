@@ -28,13 +28,12 @@ void BSP_ledRedOff(void);
 
 void BSP_ledBlueOn(void);
 void BSP_ledBlueOff(void);
-void BSP_ledBlueToggle(void);
 
 void BSP_ledGreenOn(void);
 void BSP_ledGreenOff(void);
 void BSP_ledGreenToggle(void);
 
-void BSP_ledOn(unsigned led);
-void BSP_ledOff(unsigned led);
+void BSP_ledOn(uint8_t led);
+void BSP_ledOff(uint8_t led);
 
 #endif // __BSP_H__

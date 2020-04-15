@@ -1,11 +1,16 @@
-/* Standard includes. */
+/*
+ * Simple demo that uses FreeRTOS and the CMSIS definitions to create
+ * 3 tasks (one periodic and 2 continuous) that blink the 3 LEDs of the board,
+ * and an interrupt triggered by the button SW1 of the board.
+ */
+
 #include <stdio.h>
 
-#include "TM4C123GH6PM.h"
 /* Kernel includes. */
 #include "FreeRTOS.h"
 #include "task.h"
 
+#include "TM4C123GH6PM.h"
 #include "bsp.h"
 
 /* Definition of the functions implementing the tasks. */
@@ -15,14 +20,14 @@ static void vContinuousProcessingTask(void *pvParameters);
 /* Parameters for our two continuous tasks.
  * Static so they are not on the stack, ensuring that
  * they remain valid when the tasks are executing. */
-static unsigned led_continuous_1 = LED_RED;
-static unsigned led_continuous_2 = LED_BLUE;
+static uint8_t led_continuous_1 = LED_RED;
+static uint8_t led_continuous_2 = LED_BLUE;
 
 /*-----------------------------------------------------------*/
 
 static void vContinuousProcessingTask(void* pvParameters)
 {
-    unsigned led = *(unsigned*)pvParameters;
+    uint8_t led = *(uint8_t*)pvParameters;
 
     for (;;)
     {

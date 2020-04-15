@@ -3,7 +3,7 @@
 ## Overview
 
 This is a simple demo that uses FreeRTOS and the CMSIS definitions to create
-3 tasks (one periodic and 2 continuous) that blink the 3 leds of the board, 
+3 tasks (one periodic and 2 continuous) that blink the 3 LEDs of the board, 
 and an interrupt triggered by the button SW1 of the board.  
 The configuration of FreeRTOS for the 
 board is found in [FreeRTOSConfig.h](FreeRTOSConfig.h).
