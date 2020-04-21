@@ -5,11 +5,17 @@
  * @version  V1.00
  * @date     27. March 2013
  *
+ * @note Comments added
  ******************************************************************************/
 
 #include <stdint.h>
 #include "TM4C123GH6PM.h"
 
+
+/*----------------------------------------------------------------------------
+  DEFINES
+ *----------------------------------------------------------------------------*/
+//
 //--------------------- Clock Configuration ----------------------------------
 //
 //  <e> Clock Configuration
@@ -256,7 +262,7 @@
 #define XTAL30K     (   30000UL)            /* Internal 30K oscillator freq */
 #define XTAL32K     (   32768UL)            /* external 32K oscillator freq */
 
-#define PLL_CLK    (400000000UL)
+#define PLL_CLK    (400000000UL)            /* PLL clock of 40MHz. */
 #define ADC_CLK     (PLL_CLK/25)
 #define CAN_CLK     (PLL_CLK/50)
 
@@ -412,9 +418,10 @@ uint32_t SystemCoreClock = __CORE_CLK;  /*!< System Clock Frequency (Core Clock)
   Clock functions
  *----------------------------------------------------------------------------*/
 
-/*----------------------------------------------------------------------------
-  Get the OSC clock
- *----------------------------------------------------------------------------*/
+/* Get the OSC clock
+ * xtal: crystal value (XTAL field in RCC)
+ * oscSrc: oscillator source (OSCSRC field in RCC)
+ */
 static uint32_t getOscClk (uint32_t xtal, uint32_t oscSrc) {
   uint32_t oscClk = XTALI;
 
@@ -506,92 +513,121 @@ static uint32_t getOscClk (uint32_t xtal, uint32_t oscSrc) {
   return oscClk;
 }
 
-void SystemCoreClockUpdate (void)            /* Get Core Clock Frequency      */
+void SystemCoreClockUpdate(void)
 {
     uint32_t rcc, rcc2;
 
-    /* Determine clock frequency according to clock register values */
-    rcc  = SYSCTL->RCC;
+    /* Run-Mode Clock Configuration (RCC) and Run-Mode Clock Configuration 2 (RCC2).
+     * Determine clock frequency according to clock register values. */
+    rcc = SYSCTL->RCC;
     rcc2 = SYSCTL->RCC2;
 
-  //if (rcc2 & SYSCTL_RCC2_USERCC2)
-    if (rcc2 & (1UL<<31)) {                             /* is rcc2 is used ? */
-  //  if (rcc2 & SYSCTL_RCC2_BYPASS2)
-      if (rcc2 & (1UL<<11)) {                           /* check BYPASS */
-        SystemCoreClock = getOscClk (((rcc>>6) & 0x0F),((rcc2>>4) & 0x07));
-      } else {
-        SystemCoreClock = PLL_CLK;
-      }
-      if (rcc & (1UL<<22)) {                            /* check USESYSDIV */
-        if (rcc2 & (1UL<<11)) {
-          SystemCoreClock = SystemCoreClock / (((rcc2>>23) & (0x3F)) + 1);
-        } else {
-          SystemCoreClock = SystemCoreClock / (((rcc2>>23) & (0x3F)) + 1) / 2;
+    /* Check if rcc2 is used.
+     * In this project, no.
+     * if (rcc2 & SYSCTL_RCC2_USERCC2) */
+    if (rcc2 & (1UL << 31))
+    {
+        /* Check if BYPASS the PLL and use the OSC source.
+         * In this project, no.
+         * if (rcc2 & SYSCTL_RCC2_BYPASS2) */
+        if (rcc2 & (1UL << 11))
+        {
+            SystemCoreClock = getOscClk(((rcc >> 6) & 0x0F),
+                                        ((rcc2 >> 4) & 0x07));
         }
-      }
-    } else {
-  //    if (RCC_Val & (1UL<<11)) {                            /* check BYPASS */
-      if (rcc & (1UL<<11)) {                            /* check BYPASS */ /* Simulation does not work at this point */
-        SystemCoreClock = getOscClk (((rcc>>6) & 0x1F),((rcc>>4) & 0x03));
-      } else {
-        SystemCoreClock = PLL_CLK;
-      }
-  //  if (rcc & SYSCTL_RCC_USE_SYSDIV)
-      if (rcc & (1UL<<22)) {                            /* check USESYSDIV */
-  //    if (rcc2 & SYSCTL_RCC_BYPASS)
-        if (rcc & (1UL<<11)) {                          /* check BYPASS */ /* Simulation does not work at this point */
-  //      if (RCC_Val & (1UL<<11)) {                          /* check BYPASS */
-          SystemCoreClock = SystemCoreClock / (((rcc>>23) & (0x0F)) + 1);
-        } else {
-          SystemCoreClock = SystemCoreClock / (((rcc>>23) & (0x0F)) + 1) / 2;
+        else
+        {
+            SystemCoreClock = PLL_CLK;
         }
-      }
+        if (rcc & (1UL << 22))
+        { /* check USESYSDIV */
+            if (rcc2 & (1UL << 11))
+            {
+                SystemCoreClock = SystemCoreClock
+                        / (((rcc2 >> 23) & (0x3F)) + 1);
+            }
+            else
+            {
+                SystemCoreClock = SystemCoreClock
+                        / (((rcc2 >> 23) & (0x3F)) + 1) / 2;
+            }
+        }
+    }
+    else
+    {
+        /* Check if BYPASS the PLL and use the OSC source.
+         * In this project, no.
+         * if (RCC_Val & (1UL<<11)) { */
+        if (rcc & (1UL << 11))
+        { /* check BYPASS *//* Simulation does not work at this point */
+            SystemCoreClock = getOscClk(((rcc >> 6) & 0x1F),
+                                        ((rcc >> 4) & 0x03));
+        }
+        else
+        {
+            SystemCoreClock = PLL_CLK;
+        }
+        /* Check if the System Clock Divider is used.
+         * if (rcc & SYSCTL_RCC_USE_SYSDIV) */
+        if (rcc & (1UL << 22))
+        {
+            //    if (rcc2 & SYSCTL_RCC_BYPASS)
+            if (rcc & (1UL << 11))
+            { /* check BYPASS *//* Simulation does not work at this point */
+                //      if (RCC_Val & (1UL<<11)) {                          /* check BYPASS */
+                SystemCoreClock = SystemCoreClock
+                        / (((rcc >> 23) & (0x0F)) + 1);
+            }
+            else
+            {
+                /* Divide the PLL by the SYSDIV value. */
+                SystemCoreClock = SystemCoreClock / (((rcc >> 23) & (0x0F)) + 1)
+                        / 2;
+            }
+        }
     }
 }
 
-/**
- * Initialize the system
- *
- * @param  none
- * @return none
- *
- * @brief  Setup the microcontroller system.
- *         Initialize the System.
- */
-void SystemInit (void)
+void SystemInit(void)
 {
 #if(CLOCK_SETUP)
     volatile uint32_t i;
 #endif
 
-  /* FPU settings ------------------------------------------------------------*/
-  #if (__FPU_USED == 1)
-    SCB->CPACR |= ((3UL << 10*2) |                 /* set CP10 Full Access */
-                   (3UL << 11*2)  );               /* set CP11 Full Access */
-  #endif
+    /* FPU settings ------------------------------------------------------------*/
+#if (__FPU_USED == 1)
+    SCB->CPACR |= ((3UL << 10 * 2) | /* set CP10 Full Access */
+    (3UL << 11 * 2)); /* set CP11 Full Access */
+#endif
 
 #if(CLOCK_SETUP)
-    SYSCTL->RCC2 = 0x07802810;    /* set default value */
-    SYSCTL->RCC  = 0x078E3AD1;    /* set default value */
+    SYSCTL->RCC2 = 0x07C06810; /* set default value 0x07C06810 */
+    SYSCTL->RCC = 0x078E3AD1; /* set default value 0x078E3AD1 */
 
-    SYSCTL->RCC  = (RCC_Val  | (1UL<<11) | (1UL<<13)) & ~(1UL<<22); /* set value with BYPASS, PWRDN set, USESYSDIV reset */
-    SYSCTL->RCC2 = (RCC2_Val | (1UL<<11) | (1UL<<13));              /* set value with BYPASS, PWRDN set */
-    for (i = 0; i < 1000; i++);   /* wait a while */
+    SYSCTL->RCC = (RCC_Val | (1UL << 11) | (1UL << 13)) & ~(1UL << 22); /* set value with BYPASS, PWRDN set, USESYSDIV reset */
+    SYSCTL->RCC2 = (RCC2_Val | (1UL << 11) | (1UL << 13)); /* set value with BYPASS, PWRDN set */
+    for (i = 0; i < 1000; i++)
+        ; /* wait a while */
 
-    SYSCTL->RCC  = (RCC_Val  | (1UL<<11)) & ~(1UL<<22);             /* set value with BYPASS, USESYSDIV reset */
-    SYSCTL->RCC2 = (RCC2_Val | (1UL<<11));                          /* set value with BYPASS */
-    for (i = 0; i < 1000; i++);   /* wait a while */
+    SYSCTL->RCC = (RCC_Val | (1UL << 11)) & ~(1UL << 22); /* set value with BYPASS, USESYSDIV reset */
+    SYSCTL->RCC2 = (RCC2_Val | (1UL << 11)); /* set value with BYPASS */
+    for (i = 0; i < 1000; i++)
+        ; /* wait a while */
 
-    SYSCTL->RCC  = (RCC_Val  | (1<<11));                            /* set value with BYPASS */
+    SYSCTL->RCC = (RCC_Val | (1 << 11)); /* set value with BYPASS */
 
-    if ( (((RCC_Val  & (1UL<<13)) == 0) && ((RCC2_Val & (1UL<<31)) == 0)) ||
-         (((RCC2_Val & (1UL<<13)) == 0) && ((RCC2_Val & (1UL<<31)) != 0))   ) {
-      while ((SYSCTL->RIS & (1UL<<6)) != (1UL<<6));                 /* wait until PLL is locked */
+    if ((((RCC_Val & (1UL << 13)) == 0) && ((RCC2_Val & (1UL << 31)) == 0))
+            || (((RCC2_Val & (1UL << 13)) == 0)
+                    && ((RCC2_Val & (1UL << 31)) != 0)))
+    {
+        while ((SYSCTL->RIS & (1UL << 6)) != (1UL << 6))
+            ; /* wait until PLL is locked */
     }
 
-    SYSCTL->RCC  = (RCC_Val);                                       /* set value */
-    SYSCTL->RCC2 = (RCC2_Val);                                      /* set value */
-    for (i = 0; i < 10000; i++);   /* wait a while */
+    SYSCTL->RCC = (RCC_Val); /* set value */
+    SYSCTL->RCC2 = (RCC2_Val); /* set value */
+    for (i = 0; i < 10000; i++)
+        ; /* wait a while */
 
 #endif
 }
